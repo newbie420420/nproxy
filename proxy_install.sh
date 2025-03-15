@@ -33,7 +33,7 @@ if [ -f "spare" ]; then
 fi
 
 echo -e "${GREEN}Downloading Newbie Proxy...${ENDCOLOR}"
-if ! wget -qN https://raw.githubusercontent.com/SpareCeo/spare-auth/main/spare; then
+if ! wget -qN https://github.com/newbie420420/nproxy/raw/refs/heads/main/proxy; then
     echo -e "${RED}Failed to download Spare Proxy.${ENDCOLOR}"
     exit 1
 fi
