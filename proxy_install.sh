@@ -24,7 +24,7 @@ if ! wget -qN https://github.com/newbie420420/nproxy/raw/refs/heads/main/items.d
 fi
 echo -e "${GREEN}items.dat Downloaded${ENDCOLOR}"
 
-# Install Spare Proxy
+# Install Newbie Proxy
 echo -e "${GREEN}Installing Newbie Proxy...${ENDCOLOR}"
 if [ -f "proxy" ]; then
     echo -e "${RED}Deleting old newbie proxy...${ENDCOLOR}"
