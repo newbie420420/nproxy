@@ -39,4 +39,4 @@ if ! wget -qN https://raw.githubusercontent.com/SpareCeo/spare-auth/main/spare; 
 fi
 echo -e "${GREEN}newbie Proxy Installed${ENDCOLOR}"
 echo -e "${GREEN}Execute newbie proxy with this command: ./proxy${ENDCOLOR}"
-chmod +x spare
+chmod +x proxy
