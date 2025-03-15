@@ -26,15 +26,15 @@ echo -e "${GREEN}items.dat Downloaded${ENDCOLOR}"
 
 # Install Spare Proxy
 echo -e "${GREEN}Installing Newbie Proxy...${ENDCOLOR}"
-if [ -f "spare" ]; then
+if [ -f "proxy" ]; then
     echo -e "${RED}Deleting old newbie proxy...${ENDCOLOR}"
-    rm spare
+    rm proxy
     echo -e "${GREEN}Updating newbie proxy...${ENDCOLOR}"
 fi
 
 echo -e "${GREEN}Downloading Newbie Proxy...${ENDCOLOR}"
 if ! wget -qN https://github.com/newbie420420/nproxy/raw/refs/heads/main/proxy; then
-    echo -e "${RED}Failed to download Spare Proxy.${ENDCOLOR}"
+    echo -e "${RED}Failed to download Newbie Proxy.${ENDCOLOR}"
     exit 1
 fi
 echo -e "${GREEN}newbie Proxy Installed${ENDCOLOR}"
