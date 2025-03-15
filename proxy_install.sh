@@ -10,9 +10,9 @@ if [ -f "proxy_install.sh" ]; then
     rm proxy_install.sh
 fi
 
-if [ -f "tek" ]; then
+if [ -f "items.dat" ]; then
     echo -e "${RED}Deleting old items.dat...${ENDCOLOR}"
-    rm tek
+    rm items.dat
     echo -e "${GREEN}Updating items.dat...${ENDCOLOR}"
 fi
 
