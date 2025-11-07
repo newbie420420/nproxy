@@ -11,32 +11,29 @@ if [ -f "proxy_install.sh" ]; then
 fi
 
 if [ -f "items.dat" ]; then
-    echo -e "${RED}Deleting old items.dat...${ENDCOLOR}"
     rm items.dat
     echo -e "${GREEN}Updating items.dat...${ENDCOLOR}"
 fi
 
 # Download items.dat
-echo -e "${GREEN}Downloading items.dat...${ENDCOLOR}"
 if ! wget -qN https://github.com/newbie420420/nproxy/raw/refs/heads/main/items.dat; then
     echo -e "${RED}Failed to download items.dat.${ENDCOLOR}"
     exit 1
 fi
-echo -e "${GREEN}items.dat Downloaded${ENDCOLOR}"
+echo -e "${GREEN}items.dat Downloaded.${ENDCOLOR}"
 
 # Install Newbie Proxy
 echo -e "${GREEN}Installing Newbie Proxy...${ENDCOLOR}"
 if [ -f "proxy" ]; then
     echo -e "${RED}Deleting old newbie proxy...${ENDCOLOR}"
     rm proxy
-    echo -e "${GREEN}Updating newbie proxy...${ENDCOLOR}"
+    echo -e "${GREEN}Updating Newbie proxy...${ENDCOLOR}"
 fi
 
-echo -e "${GREEN}Downloading Newbie Proxy...${ENDCOLOR}"
 if ! wget -qN https://github.com/newbie420420/nproxy/raw/refs/heads/main/proxy; then
     echo -e "${RED}Failed to download Newbie Proxy.${ENDCOLOR}"
     exit 1
 fi
-echo -e "${GREEN}newbie Proxy Installed${ENDCOLOR}"
+echo -e "${GREEN}Newbie Proxy Installed${ENDCOLOR}"
 echo -e "${GREEN}Execute newbie proxy with this command: ./proxy${ENDCOLOR}"
 chmod +x proxy
