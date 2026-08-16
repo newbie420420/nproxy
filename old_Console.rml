@@ -249,9 +249,26 @@
                 ConsoleFollowNewestTicks = 2
                 ConsoleLastLogSignature = ConsoleBuildLogSignature(document)
             end
+
+            -- Block RmlUi from treating TAB (Rml::Input::KI_TAB = 70) as a
+            -- console/chat focus key. Installed on the whole UI context so it
+            -- can see TAB even before #input-text has focus.
+            ConsoleTabBlockInstalled = ConsoleTabBlockInstalled or false
+
+            function ConsoleInstallTabBlock(document)
+                if ConsoleTabBlockInstalled then return end
+                ConsoleTabBlockInstalled = true
+
+                document.context:AddEventListener(
+                    'keydown',
+                    "if event.parameters.key_identifier == 70 then local input = document:GetElementById('input-text'); if input then input:Blur() end; event:StopImmediatePropagation() end",
+                    document,
+                    true
+                )
+            end
         </script>
 	</head>
-	<body>
+	<body onshow="ConsoleInstallTabBlock(document)">
 		<div id="legacy_chat_window_fixed_2026" class="chat_region" data-model="ConsoleModel" data-class-hidden="!ConsoleModel.IsShown">
 
 			<div id="classic_chat_fill"></div>
