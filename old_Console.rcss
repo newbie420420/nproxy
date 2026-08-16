@@ -26,7 +26,7 @@
     max-width: 84.8vw;
 
     height: 145dp;
-    min-height: 105dp;
+    min-height: 90dp;
     max-height: 470dp;
 
     padding: 0dp;
