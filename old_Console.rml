@@ -148,6 +148,47 @@
                 log.scroll_top = target
             end
 
+            function ConsoleSetTypingVisible(document, visible)
+                local panel = document:GetElementById('input-panel')
+                if panel then
+                    panel:SetClass('typing', visible)
+                end
+
+                -- The log must only reserve room for the input while typing.
+                -- Mirroring the state onto the outer chat window lets RCSS
+                -- collapse/restore the whole bottom row without affecting the
+                -- text field's ability to receive programmatic focus.
+                local wnd = ConsoleGetWindow(document)
+                if wnd then
+                    wnd:SetClass('typing', visible)
+                end
+            end
+
+            function ConsoleTypingBegin(document)
+                ConsoleSetTypingVisible(document, true)
+            end
+
+            function ConsoleTypingEnd(document)
+                ConsoleSetTypingVisible(document, false)
+            end
+
+            function ConsoleHandleInputKeyUp(document, event)
+                -- RmlUi key identifiers follow Windows VK values, so RETURN is 13.
+                -- Read the actual form control value BEFORE Growtopia handles the
+                -- key. A sent message may be cleared by GT immediately afterwards,
+                -- and we only want empty-Enter to close typing mode.
+                local input = document:GetElementById('input-text')
+                local was_empty = input == nil or input.value == nil or input.value == ''
+
+                OnEvent(event, 'Console.HandleInput')
+
+                if event.parameters.key_identifier == 13 and was_empty then
+                    if input then input:Blur() end
+                    ConsoleTypingEnd(document)
+                    event:StopImmediatePropagation()
+                end
+            end
+
             function ConsoleForceOpenNewest(document)
                 -- The input focus event is the reliable "chat just opened" signal.
                 -- One immediate scroll can still happen before RmlUi finishes laying
@@ -183,6 +224,11 @@
             end
 
             function ConsoleWatchdogTick(document, element)
+                -- Re-check the active document/context continuously. This is cheap
+                -- because ConsoleInstallTabBlock returns immediately while they are
+                -- unchanged, but repairs TAB handling after UI context recreation.
+                ConsoleInstallTabBlock(document)
+
                 -- Growtopia does not reliably emit the list callback when its own
                 -- "new messages below" setting is disabled. Poll the rendered
                 -- bound list instead, and only auto-follow when its content changed.
@@ -251,20 +297,31 @@
             end
 
             -- Block RmlUi from treating TAB (Rml::Input::KI_TAB = 70) as a
-            -- console/chat focus key. Installed on the whole UI context so it
-            -- can see TAB even before #input-text has focus.
-            ConsoleTabBlockInstalled = ConsoleTabBlockInstalled or false
+            -- console/chat focus key. Track the actual document + UI context instead
+            -- of using a permanent boolean: GT can recreate/swap UI state after
+            -- tutorial/menu actions while Lua globals survive, which made the old
+            -- listener disappear while ConsoleTabBlockInstalled stayed true.
+            ConsoleTabBlockDocument = ConsoleTabBlockDocument or nil
+            ConsoleTabBlockContext = ConsoleTabBlockContext or nil
 
             function ConsoleInstallTabBlock(document)
-                if ConsoleTabBlockInstalled then return end
-                ConsoleTabBlockInstalled = true
+                if not document or not document.context then return end
 
-                document.context:AddEventListener(
-                    'keydown',
-                    "if event.parameters.key_identifier == 70 then local input = document:GetElementById('input-text'); if input then input:Blur() end; event:StopImmediatePropagation() end",
-                    document,
-                    true
-                )
+                local context = document.context
+                if ConsoleTabBlockDocument == document and ConsoleTabBlockContext == context then
+                    return
+                end
+
+                ConsoleTabBlockDocument = document
+                ConsoleTabBlockContext = context
+
+                local block_tab = "if event.parameters.key_identifier == 70 then local input = document:GetElementById('input-text'); if input then input:Blur() end; event:StopImmediatePropagation() end"
+
+                -- Capture both phases. Keydown is what normally opens/focuses chat;
+                -- keyup is blocked too so a recreated UI cannot finish TAB focus
+                -- navigation after the first event was consumed.
+                context:AddEventListener('keydown', block_tab, document, true)
+                context:AddEventListener('keyup', block_tab, document, true)
             end
         </script>
 	</head>
@@ -351,15 +408,15 @@
 			</div>
 
 			<!-- Input Panel -->
-			<div class="input-panel">
+			<div id="input-panel" class="input-panel">
 				<div id="input-content">
 					<div class="message-hint-panel" data-class-hidden="len(ConsoleModel.InputText) > 0">
 						<div id="message-hint-text">Enter Message Here</div>
 					</div>
 					<input id="input-text" type="text" maxlength="120" data-value="ConsoleModel.InputText"
-							onkeyup="OnEvent(event, 'Console.HandleInput')"
-							onblur="OnEvent(event, 'Console.HandleInputFocusEnd')"
-							onfocus="ConsoleForceOpenNewest(document); OnEvent(event, 'Console.HandleInputFocusBegin')"/>
+							onkeyup="ConsoleHandleInputKeyUp(document, event)"
+							onblur="ConsoleTypingEnd(document); OnEvent(event, 'Console.HandleInputFocusEnd')"
+							onfocus="ConsoleTypingBegin(document); ConsoleForceOpenNewest(document); OnEvent(event, 'Console.HandleInputFocusBegin')"/>
 				</div>
 				<div id="input-info"><span id="input-count" data-rml="len(ConsoleModel.InputText)+'/120'"></span></div>
 			</div>

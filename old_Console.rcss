@@ -757,3 +757,120 @@
 /* ========================= V33 FINAL TWEAKS =============================
    Restore the original contraction limit, keep the larger expansion range,
    and center the compact 28dp counter vertically in the input strip. */
+
+
+/* ================= OLD-GT INPUT VISIBILITY =============================
+   Keep the input alive so GT can focus it from the keyboard, but don't draw
+   the modern input strip until the player is actually typing.  Lua toggles
+   .typing from the input's native focus/blur events. */
+#input-panel {
+    border-top-color: rgba(136,184,203,0);
+}
+
+#input-panel #input-content,
+#input-panel #input-info {
+    opacity: 0;
+}
+
+#input-panel.typing {
+    border-top-color: rgb(136,184,203);
+}
+
+#input-panel.typing #input-content,
+#input-panel.typing #input-info {
+    opacity: 1;
+}
+
+
+/* ================== V35 TRUE OLD-GT COLLAPSING INPUT ===================
+   When not typing, reserve ZERO chat layout space for the input strip.
+   Keep a tiny transparent focus target alive because Growtopia focuses this
+   element programmatically when chat is opened. Once focused, Lua adds
+   .typing and the complete row is restored. */
+
+/* No typing: collapse the entire visual row. */
+#input-panel {
+    height: 0dp;
+    min-height: 0dp;
+    max-height: 0dp;
+    border-top-width: 0dp;
+    border-top-color: rgba(136,184,203,0);
+    overflow: visible;
+    background-color: transparent;
+    pointer-events: none;
+}
+
+/* Keep the input technically alive/focusable without occupying visible room. */
+#input-panel #input-content {
+    left: 4dp;
+    right: 76dp;
+    top: 0dp;
+    bottom: auto;
+    height: 1dp;
+    min-height: 1dp;
+    max-height: 1dp;
+    opacity: 0;
+    overflow: hidden;
+}
+
+#input-panel #input-text {
+    top: 0dp;
+    bottom: auto;
+    height: 1dp;
+    min-height: 1dp;
+    max-height: 1dp;
+    line-height: 1dp;
+    padding-top: 0dp;
+    padding-bottom: 0dp;
+}
+
+#input-panel #input-info,
+#input-panel .message-hint-panel {
+    opacity: 0;
+}
+
+/* Most importantly, don't leave the old 52dp blank reservation behind. */
+.chat_region .log-panel {
+    padding-bottom: 10dp;
+}
+
+/* Typing: restore the full old-GT input strip and its reserved log space. */
+#input-panel.typing {
+    height: 41dp;
+    min-height: 41dp;
+    max-height: 41dp;
+    border-top-width: 2dp;
+    border-top-color: rgb(136,184,203);
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+#input-panel.typing #input-content {
+    left: 4dp;
+    right: 76dp;
+    top: 3dp;
+    bottom: 3dp;
+    height: auto;
+    min-height: 0dp;
+    max-height: 64dp;
+    opacity: 1;
+}
+
+#input-panel.typing #input-text {
+    top: -3dp;
+    bottom: auto;
+    height: 32dp;
+    min-height: 32dp;
+    max-height: 32dp;
+    line-height: 32dp;
+    padding: 0dp 8dp 0dp 8dp;
+}
+
+#input-panel.typing #input-info,
+#input-panel.typing .message-hint-panel {
+    opacity: 1;
+}
+
+.chat_region.typing .log-panel {
+    padding-bottom: 52dp;
+}
