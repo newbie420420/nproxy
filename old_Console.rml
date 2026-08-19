@@ -172,23 +172,6 @@
                 ConsoleSetTypingVisible(document, false)
             end
 
-            function ConsoleHandleInputKeyUp(document, event)
-                -- RmlUi key identifiers follow Windows VK values, so RETURN is 13.
-                -- Read the actual form control value BEFORE Growtopia handles the
-                -- key. A sent message may be cleared by GT immediately afterwards,
-                -- and we only want empty-Enter to close typing mode.
-                local input = document:GetElementById('input-text')
-                local was_empty = input == nil or input.value == nil or input.value == ''
-
-                OnEvent(event, 'Console.HandleInput')
-
-                if event.parameters.key_identifier == 13 and was_empty then
-                    if input then input:Blur() end
-                    ConsoleTypingEnd(document)
-                    event:StopImmediatePropagation()
-                end
-            end
-
             function ConsoleForceOpenNewest(document)
                 -- The input focus event is the reliable "chat just opened" signal.
                 -- One immediate scroll can still happen before RmlUi finishes laying
@@ -315,11 +298,14 @@
                 ConsoleTabBlockDocument = document
                 ConsoleTabBlockContext = context
 
+                -- TAB should never focus/navigate the RmlUi chat. If the message
+                -- input is currently active, blur it first so TAB immediately exits
+                -- typing; Growtopia can still use the same physical TAB press for its
+                -- normal punch/wrench mode switch outside the UI.
                 local block_tab = "if event.parameters.key_identifier == 70 then local input = document:GetElementById('input-text'); if input then input:Blur() end; event:StopImmediatePropagation() end"
 
-                -- Capture both phases. Keydown is what normally opens/focuses chat;
-                -- keyup is blocked too so a recreated UI cannot finish TAB focus
-                -- navigation after the first event was consumed.
+                -- Capture both phases. Keydown exits an active message box immediately;
+                -- keyup is blocked too so RmlUi cannot move focus back into the chat.
                 context:AddEventListener('keydown', block_tab, document, true)
                 context:AddEventListener('keyup', block_tab, document, true)
             end
@@ -414,7 +400,7 @@
 						<div id="message-hint-text">Enter Message Here</div>
 					</div>
 					<input id="input-text" type="text" maxlength="120" data-value="ConsoleModel.InputText"
-							onkeyup="ConsoleHandleInputKeyUp(document, event)"
+							onkeyup="OnEvent(event, 'Console.HandleInput')"
 							onblur="ConsoleTypingEnd(document); OnEvent(event, 'Console.HandleInputFocusEnd')"
 							onfocus="ConsoleTypingBegin(document); ConsoleForceOpenNewest(document); OnEvent(event, 'Console.HandleInputFocusBegin')"/>
 				</div>
