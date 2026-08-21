@@ -9,6 +9,11 @@
             ConsoleWasVisible = false
             ConsoleForceOpenTicks = 0
             ConsoleFollowNewestTicks = 0
+            ConsoleChatMouseHeld = false
+            ConsoleAutoFollowNewest = true
+            ConsoleProgrammaticScroll = false
+            ConsoleHoldStartedFollowing = true
+            ConsoleHoldStartScrollTop = 0
 
             function ConsoleGetWindow(document)
                 return document:GetElementById('legacy_chat_window_fixed_2026')
@@ -117,35 +122,59 @@
                 return y
             end
 
-            function ConsoleScrollNewest(document)
+            function ConsoleGetNewestScrollTarget(document)
                 local log = document:GetElementById('log-content')
                 local newest = ConsoleGetNewestLine(document)
-                if not log or not newest then return end
+                if not log or not newest then return nil, nil end
 
-                -- Do not rely on ScrollIntoView here. With Growtopia's
-                -- "new messages below" option enabled, ShowLogLines can be
-                -- newest-first and we render it with column-reverse. RmlUi's
-                -- ScrollIntoView can then choose the opposite scroll edge.
-                -- Instead, calculate the rendered Y position of the actual newest
-                -- row and put that row's bottom exactly at the viewport bottom.
+                local max_scroll = log.scroll_height - log.client_height
+                if 0 > max_scroll then max_scroll = 0 end
+
                 local y = ConsoleElementTopInside(newest, log)
                 if y == nil then
                     -- Safe fallback for unusual offset-parent chains.
                     local lines = document:GetElementById('log-lines')
                     if lines and lines:IsClassSet('reverse-order') then
-                        log.scroll_top = 0
-                    else
-                        log.scroll_top = log.scroll_height
+                        return log, 0
                     end
-                    return
+                    return log, max_scroll
                 end
 
                 local target = y + (newest.offset_height or 0) - log.client_height
-                local max_scroll = log.scroll_height - log.client_height
-                if 0 > max_scroll then max_scroll = 0 end
                 if 0 > target then target = 0 end
                 if target > max_scroll then target = max_scroll end
+                return log, target
+            end
+
+            function ConsoleIsAtNewest(document)
+                local log, target = ConsoleGetNewestScrollTarget(document)
+                if not log or target == nil then return true end
+                return math.abs((log.scroll_top or 0) - target) <= 3
+            end
+
+            function ConsoleChatScrolled(document, element)
+                -- Manual scrolling controls whether new messages should auto-follow.
+                -- While Mouse1 is held, defer the decision until release so incoming
+                -- messages cannot accidentally turn follow mode off by changing layout.
+                if ConsoleProgrammaticScroll or ConsoleChatMouseHeld then return end
+
+                ConsoleAutoFollowNewest = ConsoleIsAtNewest(document)
+                if not ConsoleAutoFollowNewest then
+                    ConsoleFollowNewestTicks = 0
+                end
+            end
+
+            function ConsoleScrollNewest(document)
+                -- While Mouse1 is held anywhere on the chat, freeze the viewport.
+                if ConsoleChatMouseHeld then return end
+
+                local log, target = ConsoleGetNewestScrollTarget(document)
+                if not log or target == nil then return end
+
+                ConsoleProgrammaticScroll = true
                 log.scroll_top = target
+                ConsoleProgrammaticScroll = false
+                ConsoleAutoFollowNewest = true
             end
 
             function ConsoleSetTypingVisible(document, visible)
@@ -189,18 +218,30 @@
             end
 
             function ConsoleFollowIfChanged(document)
+                -- New messages may keep arriving while Mouse1 is held. Keep the
+                -- current viewport frozen and decide what to do on release.
+                if ConsoleChatMouseHeld then
+                    ConsoleFollowNewestTicks = 0
+                    return
+                end
+
                 ConsoleNormalizeLogOrder(document)
                 local signature = ConsoleBuildLogSignature(document)
 
                 if signature ~= ConsoleLastLogSignature then
                     ConsoleLastLogSignature = signature
-                    -- The bound list and flex direction can finish layout one or
-                    -- two frames after the model changed. Follow for a few watchdog
-                    -- frames so both GT ordering modes settle at the same bottom.
-                    ConsoleFollowNewestTicks = 4
+
+                    -- Only follow incoming messages when the user is already at the
+                    -- newest chat line. Scrolling up switches into history-reading
+                    -- mode until they manually return to the bottom.
+                    if ConsoleAutoFollowNewest then
+                        ConsoleFollowNewestTicks = 4
+                    else
+                        ConsoleFollowNewestTicks = 0
+                    end
                 end
 
-                if ConsoleFollowNewestTicks > 0 then
+                if ConsoleAutoFollowNewest and ConsoleFollowNewestTicks > 0 then
                     ConsoleScrollNewest(document)
                     ConsoleFollowNewestTicks = ConsoleFollowNewestTicks - 1
                 end
@@ -223,6 +264,7 @@
                     ConsoleLastLogSignature = nil
                     ConsoleForceOpenTicks = 0
                     ConsoleFollowNewestTicks = 0
+                    ConsoleAutoFollowNewest = true
                 else
                     ConsolePinWindow(document)
                     ConsoleUpdateExpanded(document)
@@ -263,19 +305,71 @@
                 ConsoleFollowIfChanged(document)
             end
 
+            function ConsoleChatHoldBegin(document, event)
+                -- RmlUi button 0 = left mouse button (Mouse1).
+                if not event or event.parameters.button ~= 0 then return end
+
+                ConsoleHoldStartedFollowing = ConsoleAutoFollowNewest
+                local log = document:GetElementById('log-content')
+                ConsoleHoldStartScrollTop = log and (log.scroll_top or 0) or 0
+
+                ConsoleChatMouseHeld = true
+                ConsoleFollowNewestTicks = 0
+            end
+
+            function ConsoleChatHoldEnd(document, event)
+                -- The context-level mouseup listener also sees releases outside
+                -- the chat, so a held chat can never get stuck in frozen mode.
+                if event and event.parameters.button ~= 0 then return end
+                if not ConsoleChatMouseHeld then return end
+
+                ConsoleChatMouseHeld = false
+                ConsoleNormalizeLogOrder(document)
+
+                local log = document:GetElementById('log-content')
+                local current_scroll = log and (log.scroll_top or 0) or ConsoleHoldStartScrollTop
+                local scroll_moved = math.abs(current_scroll - ConsoleHoldStartScrollTop) > 3
+
+                -- Normal hold at the bottom: release catches up with messages that
+                -- arrived while frozen. But if the hold started in history mode, or
+                -- the user actually moved the scrollbar during the hold, preserve it.
+                if scroll_moved then
+                    ConsoleAutoFollowNewest = ConsoleIsAtNewest(document)
+                else
+                    ConsoleAutoFollowNewest = ConsoleHoldStartedFollowing
+                end
+
+                if ConsoleAutoFollowNewest then
+                    ConsoleScrollNewest(document)
+                    ConsoleFollowNewestTicks = 2
+                else
+                    ConsoleFollowNewestTicks = 0
+                end
+
+                ConsoleLastLogSignature = ConsoleBuildLogSignature(document)
+            end
+
             function ConsoleResizeDrag(document)
                 ConsolePinWindow(document)
                 ConsoleUpdateExpanded(document)
-                ConsoleScrollNewest(document)
-                ConsoleFollowNewestTicks = 2
+                if ConsoleAutoFollowNewest then
+                    ConsoleScrollNewest(document)
+                    ConsoleFollowNewestTicks = 2
+                else
+                    ConsoleFollowNewestTicks = 0
+                end
                 ConsoleLastLogSignature = ConsoleBuildLogSignature(document)
             end
 
             function ConsoleResizeEnd(document)
                 ConsolePinWindow(document)
                 ConsoleUpdateExpanded(document)
-                ConsoleScrollNewest(document)
-                ConsoleFollowNewestTicks = 2
+                if ConsoleAutoFollowNewest then
+                    ConsoleScrollNewest(document)
+                    ConsoleFollowNewestTicks = 2
+                else
+                    ConsoleFollowNewestTicks = 0
+                end
                 ConsoleLastLogSignature = ConsoleBuildLogSignature(document)
             end
 
@@ -308,11 +402,15 @@
                 -- keyup is blocked too so RmlUi cannot move focus back into the chat.
                 context:AddEventListener('keydown', block_tab, document, true)
                 context:AddEventListener('keyup', block_tab, document, true)
+
+                -- Catch Mouse1 release even when the cursor leaves the chat before
+                -- the button is released.
+                context:AddEventListener('mouseup', "ConsoleChatHoldEnd(document, event)", document, true)
             end
         </script>
 	</head>
 	<body onshow="ConsoleInstallTabBlock(document)">
-		<div id="legacy_chat_window_fixed_2026" class="chat_region" data-model="ConsoleModel" data-class-hidden="!ConsoleModel.IsShown">
+		<div id="legacy_chat_window_fixed_2026" class="chat_region" data-model="ConsoleModel" data-class-hidden="!ConsoleModel.IsShown" onmousedown="ConsoleChatHoldBegin(document, event)">
 
 			<div id="classic_chat_fill"></div>
 			<div id="chat-watchdog" class="watchdog-a" onanimationend="ConsoleWatchdogTick(document, element)"></div>
@@ -409,7 +507,7 @@
 
 			<!-- Log Panel -->
 			<div class="log-panel" id="log-top">
-				<div class="show-scrollbar wondow-content-full wondow-content-horizontal" id="log-content" onlistupdated="ConsoleLogUpdated(document, element)">
+				<div class="show-scrollbar wondow-content-full wondow-content-horizontal" id="log-content" onlistupdated="ConsoleLogUpdated(document, element)" onscroll="ConsoleChatScrolled(document, element)">
 					<div id="log-lines">
 						<div data-for="Line : ConsoleModel.ShowLogLines">
 							<div class="chat_padding" data-class-alternate="IsOdd(Line)">
