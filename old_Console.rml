@@ -19,6 +19,10 @@
             -- Arm from the PRE-SEND visual state, then run the exact same TAB blur path
             -- on later UI ticks, after the native send handler has finished.
             ConsolePostSendTabTicks = 0
+            -- Tracks whether the custom input strip is intentionally visible.
+            -- This is separate from native focus because new GT may silently
+            -- refocus input-text after a send while we keep the strip closed.
+            ConsoleTypingVisibleState = false
 
             function ConsoleGetWindow(document)
                 return document:GetElementById('legacy_chat_window_fixed_2026')
@@ -183,6 +187,7 @@
             end
 
             function ConsoleSetTypingVisible(document, visible)
+                ConsoleTypingVisibleState = visible
                 local panel = document:GetElementById('input-panel')
                 if panel then
                     panel:SetClass('typing', visible)
@@ -425,6 +430,22 @@
             ConsoleTabBlockDocument = ConsoleTabBlockDocument or nil
             ConsoleTabBlockContext = ConsoleTabBlockContext or nil
 
+            function ConsoleImmediateReopenOnEnter(document, event)
+                if not event or not event.parameters then return end
+                local key = event.parameters.key_identifier
+                if key ~= 72 and key ~= 61 then return end
+
+                -- If the strip is already visible, this is the send Enter; leave the
+                -- post-send close logic alone. If it is hidden, this is a fresh user
+                -- request to type again. Cancel the anti-refocus countdown immediately
+                -- so a fast second Enter is never swallowed.
+                if not ConsoleTypingVisibleState then
+                    ConsolePostSendTabTicks = 0
+                    ConsoleSetTypingVisible(document, true)
+                    ConsoleForceOpenNewest(document)
+                end
+            end
+
             function ConsoleInstallTabBlock(document)
                 if not document or not document.context then return end
 
@@ -446,6 +467,11 @@
                 -- keyup is blocked too so RmlUi cannot move focus back into the chat.
                 context:AddEventListener('keydown', block_tab, document, true)
                 context:AddEventListener('keyup', block_tab, document, true)
+
+                -- A fast second Enter after sending means the player intentionally
+                -- wants to type again. Let that immediately cancel the post-send
+                -- anti-refocus window without consuming the key event.
+                context:AddEventListener('keydown', "ConsoleImmediateReopenOnEnter(document, event)", document, true)
 
                 -- Catch Mouse1 release even when the cursor leaves the chat before
                 -- the button is released.
