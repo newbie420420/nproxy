@@ -15,6 +15,11 @@
             ConsoleHoldStartedFollowing = true
             ConsoleHoldStartScrollTop = 0
 
+            -- New GT keeps input-text focused after Console.HandleInput sends a message.
+            -- Arm from the PRE-SEND visual state, then run the exact same TAB blur path
+            -- on later UI ticks, after the native send handler has finished.
+            ConsolePostSendTabTicks = 0
+
             function ConsoleGetWindow(document)
                 return document:GetElementById('legacy_chat_window_fixed_2026')
             end
@@ -194,11 +199,33 @@
             end
 
             function ConsoleTypingBegin(document)
+                -- During the tiny post-send window, ignore GT trying to refocus the
+                -- text field. The watchdog below will run the proven TAB blur path.
+                if ConsolePostSendTabTicks > 0 then
+                    ConsoleSetTypingVisible(document, false)
+                    return
+                end
                 ConsoleSetTypingVisible(document, true)
             end
 
             function ConsoleTypingEnd(document)
                 ConsoleSetTypingVisible(document, false)
+            end
+
+            function ConsoleArmCloseOnRealSend(document, event)
+                if not event or not event.parameters then return end
+                local key = event.parameters.key_identifier
+                if key ~= 72 and key ~= 61 then return end
+
+                -- Do not inspect input.value/model here. The empty-message hint already
+                -- reflects the bound ConsoleModel.InputText state before native send.
+                -- hidden == true means there is real text in the field.
+                local hint = document:GetElementById('message-hint-panel')
+                if hint and hint:IsClassSet('hidden') then
+                    ConsolePostSendTabTicks = 6
+                else
+                    ConsolePostSendTabTicks = 0
+                end
             end
 
             function ConsoleForceOpenNewest(document)
@@ -252,6 +279,23 @@
                 -- because ConsoleInstallTabBlock returns immediately while they are
                 -- unchanged, but repairs TAB handling after UI context recreation.
                 ConsoleInstallTabBlock(document)
+
+                -- IMPORTANT: this runs AFTER the native keyboard event has returned.
+                -- A real physical TAB already closes this input correctly in this file.
+                -- Feed TAB only into RmlUi itself so our existing capture listener runs
+                -- the exact same input:Blur() path, without sending TAB to Growtopia.
+                if ConsolePostSendTabTicks > 0 then
+                    local context = document.context
+                    if context then
+                        context:ProcessKeyDown(70, 0)
+                        context:ProcessKeyUp(70, 0)
+                    else
+                        local input = document:GetElementById('input-text')
+                        if input then input:Blur() end
+                    end
+                    ConsoleSetTypingVisible(document, false)
+                    ConsolePostSendTabTicks = ConsolePostSendTabTicks - 1
+                end
 
                 -- Growtopia does not reliably emit the list callback when its own
                 -- "new messages below" setting is disabled. Poll the rendered
@@ -494,10 +538,11 @@
 			<!-- Input Panel -->
 			<div id="input-panel" class="input-panel">
 				<div id="input-content">
-					<div class="message-hint-panel" data-class-hidden="len(ConsoleModel.InputText) > 0">
+					<div id="message-hint-panel" class="message-hint-panel" data-class-hidden="len(ConsoleModel.InputText) > 0">
 						<div id="message-hint-text">Enter Message Here</div>
 					</div>
 					<input id="input-text" type="text" maxlength="120" data-value="ConsoleModel.InputText"
+							onkeydown="ConsoleArmCloseOnRealSend(document, event)"
 							onkeyup="OnEvent(event, 'Console.HandleInput')"
 							onblur="ConsoleTypingEnd(document); OnEvent(event, 'Console.HandleInputFocusEnd')"
 							onfocus="ConsoleTypingBegin(document); ConsoleForceOpenNewest(document); OnEvent(event, 'Console.HandleInputFocusBegin')"/>
