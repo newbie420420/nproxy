@@ -128,7 +128,7 @@
             end
 
             function ConsoleGetNewestScrollTarget(document)
-                local log = document:GetElementById('log-content')
+                local log = document:GetElementById('legacy-log-content-fixed-2026')
                 local newest = ConsoleGetNewestLine(document)
                 if not log or not newest then return nil, nil end
 
@@ -354,7 +354,7 @@
                 if not event or event.parameters.button ~= 0 then return end
 
                 ConsoleHoldStartedFollowing = ConsoleAutoFollowNewest
-                local log = document:GetElementById('log-content')
+                local log = document:GetElementById('legacy-log-content-fixed-2026')
                 ConsoleHoldStartScrollTop = log and (log.scroll_top or 0) or 0
 
                 ConsoleChatMouseHeld = true
@@ -370,7 +370,7 @@
                 ConsoleChatMouseHeld = false
                 ConsoleNormalizeLogOrder(document)
 
-                local log = document:GetElementById('log-content')
+                local log = document:GetElementById('legacy-log-content-fixed-2026')
                 local current_scroll = log and (log.scroll_top or 0) or ConsoleHoldStartScrollTop
                 local scroll_moved = math.abs(current_scroll - ConsoleHoldStartScrollTop) > 3
 
@@ -552,7 +552,9 @@
 
 			<!-- Log Panel -->
 			<div class="log-panel" id="log-top">
-				<div class="show-scrollbar wondow-content-full wondow-content-horizontal" id="log-content" onlistupdated="ConsoleLogUpdated(document, element)" onscroll="ConsoleChatScrolled(document, element)">
+				<!-- New GT may manipulate #log-content on incoming messages. Keep that native ID on a harmless hidden sink so it cannot move the real legacy viewport. -->
+				<div id="log-content" style="display:none; width:0dp; height:0dp; overflow:hidden;"></div>
+				<div class="show-scrollbar wondow-content-full wondow-content-horizontal" id="legacy-log-content-fixed-2026" onlistupdated="ConsoleLogUpdated(document, element)" onscroll="ConsoleChatScrolled(document, element)">
 					<div id="log-lines">
 						<div data-for="Line : ConsoleModel.ShowLogLines">
 							<div class="chat_padding" data-class-alternate="IsOdd(Line)">
