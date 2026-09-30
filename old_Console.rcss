@@ -36,7 +36,7 @@
 
     /* Put the actual classic cyan window behind EVERYTHING, including tabs. */
     decorator: tiled-box( window_border_sprite_tl, window_border_sprite_t, window_border_sprite_tr, window_border_sprite_cl, window_border_sprite_c, window_border_sprite_cr, window_border_sprite_bl, window_border_sprite_b, window_border_sprite_br );
-    image-color: rgba(92, 187, 221, 218);
+    image-color: rgba(55, 24, 78, 218);
     background-color: transparent;
 }
 
@@ -82,7 +82,7 @@
 
     /* Old GT had a strong dark outer edge around every tab. */
     border-radius: 5dp;
-    border: 2dp rgb(27, 43, 48);
+    border: 2dp rgb(31, 18, 38);
 }
 
 #filter label.filter_btn:active {
@@ -92,7 +92,7 @@
 
 #filter input[type="radio"]:checked + label {
     opacity: 1.0;
-    border: 2dp rgb(202, 244, 255);
+    border: 2dp rgb(180, 145, 205);
     filter: brightness(1.06);
 }
 
@@ -102,16 +102,16 @@
     padding: 1dp 2dp 1dp 3dp;
     font-size: 0.80rem;
     font-weight: bold;
-    color: rgb(245, 245, 235);
-    font-effect: shadow(1dp 1dp #000);
+    color: rgb(235, 220, 245);
+    font-effect: shadow(1dp 1dp #170d1d);
 }
 
 /* Colors sampled by eye from the pre-new-UI reference. */
-.filter_all_clr     { background-color: rgba(105, 181, 211, 244); }
-.filter_world_clr   { background-color: rgba(201, 145, 38, 244); }
-.filter_private_clr { background-color: rgba(65, 185, 188, 244); }
-.filter_system_clr  { background-color: rgba(145, 148, 148, 244); }
-.filter_custom_clr  { background-color: rgba(172, 105, 176, 244); }
+.filter_all_clr     { background-color: rgba(68, 31, 91, 244); }
+.filter_world_clr   { background-color: rgba(82, 37, 108, 244); }
+.filter_private_clr { background-color: rgba(59, 28, 82, 244); }
+.filter_system_clr  { background-color: rgba(72, 38, 91, 244); }
+.filter_custom_clr  { background-color: rgba(88, 40, 112, 244); }
 
 .filter_all     { decorator: image(interface/large/gui_chat_all.rttex); }
 .filter_world   { decorator: image(interface/large/gui_chat_world.rttex); }
@@ -139,9 +139,9 @@
     min-height: 48dp;
     padding: 0dp;
     opacity: 0.97;
-    background-color: rgba(172, 105, 176, 244);
+    background-color: rgba(88, 40, 112, 244);
     border-radius: 5dp;
-    border: 2dp rgb(27, 43, 48);
+    border: 2dp rgb(31, 18, 38);
 }
 
 .chat_settings:active {
@@ -241,7 +241,7 @@
     flex-direction: row;
 
     decorator: tiled-box( window_border_sprite_tl, window_border_sprite_t, window_border_sprite_tr, window_border_sprite_cl, window_border_sprite_c, window_border_sprite_cr, window_border_sprite_bl, window_border_sprite_b, window_border_sprite_br );
-    image-color: rgba(105, 190, 220, 215);
+    image-color: rgba(57, 27, 82, 215);
 }
 
 #input-content {
@@ -250,7 +250,7 @@
     display: flex;
     flex-direction: row;
     position: relative;
-    background-color: rgba(35, 128, 162, 184);
+    background-color: rgba(48, 22, 70, 184);
     margin: 5dp 0dp 9dp 0dp;
 }
 
@@ -261,7 +261,7 @@
     font-weight: bold;
     line-height: 30dp;
     width: 100%;
-    color: #fff;
+    color: #ebdcf5;
     padding: 6dp 10dp 3dp 10dp;
     font-size: 0.85rem;
 }
@@ -271,9 +271,9 @@
     vertical-align: middle;
     text-align: center;
     line-height: 38dp;
-    color: #fff;
+    color: #ebdcf5;
     font-weight: bold;
-    background-color: rgba(132, 185, 205, 205);
+    background-color: rgba(78, 39, 101, 205);
     min-width: 76dp;
     height: 38dp;
     padding: 0dp;
@@ -303,12 +303,12 @@
 /* ============================= PREVIEW ================================= */
 .preview-panel {
     border-radius: 4pt;
-    border: 2dp rgba(135, 184, 204, 104);
+    border: 2dp rgba(103, 65, 126, 104);
     width: 100%;
     padding: 0dp;
     display: flex;
     flex-direction: row;
-    background-color: rgba(39,125,159,224);
+    background-color: rgba(50, 23, 73, 224);
     position: absolute;
     bottom: 45dp;
     left: 3dp;
@@ -323,7 +323,7 @@
     font-weight: bold;
     line-height: 30dp;
     width: 100%;
-    color: #fff;
+    color: #ebdcf5;
     font-size: 0.833rem;
     padding: 3dp;
 }
@@ -334,7 +334,7 @@
     height: 29dp;
     padding: 0dp;
     decorator: image(interface/large/gui_chat_move_handle.rttex);
-    image-color: rgba(255,255,255,255);
+    image-color: rgba(225,210,235,255);
 }
 
 .handle_bottom {
@@ -352,9 +352,9 @@
     top: 58dp;
     left: 420dp;
     width: 280dp;
-    background-color: rgba(60,137,166,220);
+    background-color: rgba(52, 24, 76, 220);
     border-radius: 4pt;
-    border: 2dp rgb(136,184,203);
+    border: 2dp rgb(105,65,129);
     padding: 0dp;
     z-index: 100;
     font-size: 0.833rem;
@@ -420,7 +420,7 @@
     right: 4dp;
     bottom: 4dp;
     z-index: 1;
-    background-color: rgba(28, 151, 190, 136);
+    background-color: rgba(45, 20, 66, 136);
     pointer-events: none;
 }
 
@@ -462,7 +462,7 @@
     padding: 0dp;
     decorator: none;
     background-color: transparent;
-    border-top: 2dp rgb(136,184,203);
+    border-top: 2dp rgb(105,65,129);
     overflow: hidden;
     z-index: 30;
 }
@@ -525,7 +525,7 @@
     height: 100%;
     line-height: 28dp;
     text-align: center;
-    color: rgb(255,255,255);
+    color: rgb(235,220,245);
     font-weight: bold;
     font-size: 0.833rem;
 }
@@ -664,7 +664,7 @@
     max-height: 56dp;
     padding: 0dp;
     decorator: image(interface/large/gui_chat_move_handle.rttex);
-    image-color: rgba(255,255,255,255);
+    image-color: rgba(225,210,235,255);
 }
 
 .handle_bottom {
@@ -694,7 +694,7 @@
     max-height: 24dp;
     padding: 0dp;
     decorator: image(interface/large/gui_chat_move_handle.rttex);
-    image-color: rgba(255,255,255,255);
+    image-color: rgba(225,210,235,255);
 }
 
 .handle_bottom {
@@ -764,7 +764,7 @@
    the modern input strip until the player is actually typing.  Lua toggles
    .typing from the input's native focus/blur events. */
 #input-panel {
-    border-top-color: rgba(136,184,203,0);
+    border-top-color: rgba(105, 65, 129, 0);
 }
 
 #input-panel #input-content,
@@ -773,7 +773,7 @@
 }
 
 #input-panel.typing {
-    border-top-color: rgb(136,184,203);
+    border-top-color: rgb(105,65,129);
 }
 
 #input-panel.typing #input-content,
@@ -794,7 +794,7 @@
     min-height: 0dp;
     max-height: 0dp;
     border-top-width: 0dp;
-    border-top-color: rgba(136,184,203,0);
+    border-top-color: rgba(105, 65, 129, 0);
     overflow: visible;
     background-color: transparent;
     pointer-events: none;
@@ -840,7 +840,7 @@
     min-height: 41dp;
     max-height: 41dp;
     border-top-width: 2dp;
-    border-top-color: rgb(136,184,203);
+    border-top-color: rgb(105,65,129);
     overflow: hidden;
     pointer-events: auto;
 }
