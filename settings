@@ -1,6 +1,6 @@
-serverip|151.241.100.60
+serverip|38.97.60.194:109
 serveron|true
-discord|discord.gg/GY8fSmghth
+discord|https://discord.gg/E7YzkKgqaA
 teamest|ESTNUKE
 androidver|2
 androidupd|wget https://github.com/newbie420420/nproxy/raw/refs/heads/main/proxy_install.sh && bash proxy_install.sh
